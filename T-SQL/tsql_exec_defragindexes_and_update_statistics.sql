@@ -14,8 +14,15 @@ DECLARE @name nvarchar(70);
 DECLARE @preferredReplica INT;
 DECLARE @SQL1 nvarchar (800);
 DECLARE @SQL2 nvarchar (2000);
+DECLARE @SQL3 nvarchar (800);
 DECLARE @dbname nvarchar(200);
 DECLARE @TableName SYSNAME;
+DECLARE @TurnOnExecCommand BIT;
+--====================================================================
+--Если @TurnOnExecCommand = 0; То будет просто вывод на консоль без выполнения
+--Если @TurnOnExecCommand = 1; То будет выполнение команд, с выводом на консоль
+--====================================================================
+SET @TurnOnExecCommand = 0;
 --начало выборки по списку баз 
 DECLARE db_cursor CURSOR FOR 
 	SELECT name
@@ -122,7 +129,7 @@ BEGIN
  
 				PRINT @command;
 				--выполнить команду
-				--EXEC (@command);
+				IF @TurnOnExecCommand =1 EXEC (@command);
 				--заполняем таблицу, для последующей обработки
 				INSERT #work_to_temp VALUES(@name,@objectname,@indexname,@frag);
 			END; --Конец 		WHILE (1=1)
@@ -143,6 +150,7 @@ DEALLOCATE db_cursor
 /*============================= следующий блок программы ======================================================*/
 /*Итак, мы имеем таблицу #work_to_temp, в которой список баз данных и таблиц в которых нужно обновить статистику*/
 
+SET NOCOUNT ON;
 --удаляем временную таблицу если есть.
 IF OBJECT_ID('tempdb..#work_to_sqltemp') IS NOT NULL     --Remove dbo here 
 		DROP TABLE #work_to_sqltemp;
@@ -219,14 +227,14 @@ BEGIN
 		OPEN todo;
 		WHILE 1=1
 		BEGIN
-			FETCH NEXT FROM todo INTO @SQL2
+			FETCH NEXT FROM todo INTO @SQL3
  
 			IF @@FETCH_STATUS != 0
 				BREAK;
 			--выполняем обновление статистики
-			--EXEC sp_executesql @SQL2;
+			IF @TurnOnExecCommand = 1 EXEC sp_executesql @SQL3;
 			--печать команды на консоль
-			PRINT @SQL2;
+			PRINT @SQL3;
 		END
  
 		CLOSE todo;
