@@ -22,7 +22,7 @@ DECLARE @TurnOnExecCommand BIT;
 --Если @TurnOnExecCommand = 0; То будет просто вывод на консоль без выполнения
 --Если @TurnOnExecCommand = 1; То будет выполнение команд, с выводом на консоль
 --====================================================================
-SET @TurnOnExecCommand = 0;
+SET @TurnOnExecCommand = 1;
 --начало выборки по списку баз 
 DECLARE db_cursor CURSOR FOR 
 	SELECT name
@@ -30,8 +30,8 @@ DECLARE db_cursor CURSOR FOR
 	WHERE name NOT IN ('master','model','msdb','tempdb','SSISDB') AND version NOT LIKE 'null'
  
 --проверка на существование объектов
-IF OBJECT_ID('tempdb..#work_to_do') IS NOT NULL     --Remove dbo here 
-		DROP TABLE #work_to_do;
+IF OBJECT_ID('tempdb..#work_to_indexes') IS NOT NULL     --Remove dbo here 
+		DROP TABLE #work_to_indexes;
 IF OBJECT_ID('tempdb..#work_to_temp') IS NOT NULL
 	DROP TABLE #work_to_temp;
 
@@ -58,12 +58,12 @@ BEGIN
 			partition_number AS partitionnum,
 			avg_fragmentation_in_percent AS frag,
 			fragment_count AS fragcount
-		INTO #work_to_do
+		INTO #work_to_indexes
 		FROM sys.dm_db_index_physical_stats (DB_ID(@name), NULL, NULL , NULL, 'LIMITED')
 		WHERE avg_fragmentation_in_percent > 10.0 AND index_id > 0 AND fragment_count > 128;
  
 		-- Объявление курсора для чтения секций
-		DECLARE partitions CURSOR FOR SELECT * FROM #work_to_do;
+		DECLARE partitions CURSOR FOR SELECT * FROM #work_to_indexes;
  
 		-- Открытие курсора
 		OPEN partitions;
@@ -133,13 +133,13 @@ BEGIN
 				--заполняем таблицу, для последующей обработки
 				INSERT #work_to_temp VALUES(@name,@objectname,@indexname,@frag);
 			END; --Конец 		WHILE (1=1)
-			SELECT * FROM #work_to_do
+			SELECT * FROM #work_to_indexes
 			
 		-- Закрытие курсора
 		CLOSE partitions;
 		DEALLOCATE partitions; 
 		-- Удаление временной таблицы
-		DROP TABLE #work_to_do; 
+		DROP TABLE #work_to_indexes; 
 	FETCH NEXT FROM db_cursor INTO @name
 END --конец выборки по списку баз
 SELECT * FROM #work_to_temp order by infrag
@@ -219,7 +219,7 @@ BEGIN
 		--следующий блок кода, на формирование команды обновления статистики
 		DECLARE todo CURSOR FOR
 		SELECT
-			'
+			'USE ['+ @dbname +'];
 			UPDATE STATISTICS [' + SCHEMA_NAME([schema_id]) + '].[' + [tablename] + '] [' + [stat_name] + ']
 				WITH FULLSCAN' + CASE WHEN [no_recompute] = 1 THEN ', NORECOMPUTE' ELSE '' END + ';'
 		FROM #work_to_sqltemp;
