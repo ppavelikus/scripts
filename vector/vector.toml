@@ -1,0 +1,28 @@
+data_dir = "."
+[sources.log]
+type = "file"
+include = ["exsample.txt"]
+
+[sources.dates]
+type = "file"
+include = ["exsample.dp"]
+
+[transforms.csv]
+type = "remap"
+inputs = ["log"]
+drop_on_abort = true
+# file = "./my/program.vrl"
+# metric_tag_values = "single"
+source = '''
+structured = parse_regex!(.message, r'(?P<id>\d+),(?P<code>\d+),(?P<status>\w+)')
+code_names = {"I":"Information","W":"Warning","E":"Error"}
+log(structured.status)
+structured.status = get!(code_names,[structured.status])
+. = merge(.,structured)
+#. |= parse_regex!(.message, r'^(?P<id>\d+?)$')
+'''
+[sinks.outconsole]
+type = "console"
+inputs = [ "csv" ]
+encoding.codec = "json"
+encoding.only_fields = ["id","code","status","file"]

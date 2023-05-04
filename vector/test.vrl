@@ -1,0 +1,17 @@
+a = parse_regex!("12312312,2,I", r'^(?P<id>\d+),(?P<code>\d+),(?P<status>\w+)$')
+b = append(["W","Warning"],["I","Information"])
+#append(["w", "w"], ["d", "f", "g"])
+a={
+	"W":"Warning",
+	"I":"Information"
+}
+d="W"
+get!(a,d)
+#a.d[0]
+#d="W"
+#a = .W + " " + .I
+#d = { "foo": "bar" }
+#s = merge(a,c)
+#f = merge(s,d)
+#a = {"array1":["first","second"]}
+#a.array1[1]
