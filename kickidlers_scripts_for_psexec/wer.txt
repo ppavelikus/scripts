@@ -1,0 +1,8 @@
+rem show status
+cscript ospp.vbs /dstatusall
+rem change key office
+cscript ospp.vbs /inpkey:NMMKJ-6RK4F-KMJVX-8D9MJ-6MWKP
+rem specify kms server
+cscript OSPP.VBS /sethst:kms.docker1.kedr.local
+rem pending activation
+cscript ospp.vbs /act

@@ -1,0 +1,2 @@
+sc create ngs binPath= "C:\Program Files\TeleLinkSoftHelper\bin\grabber.exe" start= auto displayname= "Tele Link Soft Helper"
+sc create RServer3 binPath= "C:\Windows\SysWOW64\rserver30\RServer3.exe /service" start= auto displayname= "Radmin Server V3"
